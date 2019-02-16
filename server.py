@@ -9,6 +9,11 @@ app = Flask(__name__, static_url_path='')
 agent = Learner(epsilon=0)
 agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
 
+import logging
+handler = logging.FileHandler('/var/log/apache2/server.log')  # errors logged to this file
+handler.setLevel(logging.ERROR)  # only log errors and above
+app.logger.addHandler(handler)  # attach the handler to the app's logger
+
 @app.route('/')
 def hello_world():
     return 'Hello world'
