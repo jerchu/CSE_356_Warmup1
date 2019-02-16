@@ -11,6 +11,7 @@ agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
 import logging
 streamhndlr = logging.StreamHandler()
 app.logger.addHandler(streamhndlr)
+app.logger.setLevel(logging.INFO)
 
 @app.route('/')
 def hello_world():
