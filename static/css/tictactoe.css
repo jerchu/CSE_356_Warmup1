@@ -1,0 +1,33 @@
+body{
+    background: rgb(138, 168, 248);
+}
+
+.tictacbox{
+    margin:auto;
+    width:60vw;
+    height:60vw;
+}
+
+.square{
+    text-align: center;
+    font-size: 18vw;
+    vertical-align: top;
+    width:19vw;
+    height:19vw;
+    display:inline-block;
+}
+
+.vertline{
+    display:inline-block;
+    background:black;
+    width:1vw;
+    height:19vw;
+}
+
+.horzline{
+    display:inline-block;
+    background:black;
+    width:60vw;
+    height:1vw;
+}
+

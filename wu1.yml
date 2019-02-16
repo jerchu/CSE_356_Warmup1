@@ -1,0 +1,49 @@
+---
+- hosts: hw1
+  gather_facts: False
+
+  remote_user: ubuntu
+  tasks:
+    - name: install python 2
+      raw: test -e /usr/bin/python || (sudo apt -y update && sudo apt install -y python-minimal)
+    - name: clone server
+      git: repo=https://github.com/jerchu/CSE_356_Warmup1.git dest=/var/www/server update=yes
+      become: yes
+      become_method: sudo
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+      become: yes
+      become_method: sudo
+    - name: install mod_wsgi
+      apt: name=libapache2-mod-wsgi-py3
+      become: yes
+      become_method: sudo
+    - name: install pip3
+      apt: 
+        name: python3-pip
+        update_cache: yes
+      become: yes
+      become_method: sudo
+    - name: install Flask
+      apt:
+        name: python3-flask
+      become: yes
+      become_method: sudo
+    - name: copy conf file
+      copy: src=/var/www/server/FlaskApp.conf dest=/etc/apache2/sites-available/server.conf remote_src=yes
+      become: yes
+      become_method: sudo
+    - name: start server
+      command: a2ensite server.conf
+      args:
+        creates: /etc/apache2/sites-enabled/server.conf
+      become: yes
+      become_method: sudo
+    - command: a2dissite 000-default.conf
+      become: yes
+      become_method: sudo
+    - name: restart apache
+      service: name=apache2 state=restarted
+      become: yes
+      become_method: sudo
+      
