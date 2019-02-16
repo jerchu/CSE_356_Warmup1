@@ -8,6 +8,9 @@ import datetime
 app = Flask(__name__, static_url_path='')
 agent = Learner(epsilon=0)
 agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
+import logging
+streamhndlr = logging.StreamHandler()
+app.logger.addHandler(streamhndlr)
 
 @app.route('/')
 def hello_world():
