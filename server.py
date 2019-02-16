@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, jsonify
 import datetime
 app = Flask(__name__, static_url_path='')
 agent = Learner(epsilon=0)
-agent.load_states('static/RL_learn/playero.pickle')
+agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
 
 @app.route('/')
 def hello_world():
