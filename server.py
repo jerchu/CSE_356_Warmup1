@@ -17,7 +17,7 @@ app.logger.setLevel(logging.INFO)
 def hello_world():
     return 'Hello world'
 
-@app.route('/ttt', methods=['GET', 'POST'])
+@app.route('/ttt/', methods=['GET', 'POST'])
 def send_tic_tacs():
 	if request.method == 'POST':
 		name = request.form['name']
