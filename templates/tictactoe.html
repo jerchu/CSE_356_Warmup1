@@ -7,7 +7,11 @@
     <body>
         {% if name %}
             <p>Hello {{name}} {{date}}</p>
-            <p id="winner"></p>
+            <div id="endgame">
+                <p id="winner"></p>
+                <input id="reset" type="button" value="Play Again" onclick="reset_board()">
+            </div>
+            <script>$("#reset").hide()</script>
             <div class="tictacbox">
                 <div class="square" id="1" onclick="$(this).text('X'); make_move(1); $(this).off('click');"> </div>
                 <div class="vertline"></div>
