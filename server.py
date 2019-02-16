@@ -1,3 +1,7 @@
+import os
+here = os.path.dirname(__file__)
+import sys
+sys.path.insert(0, here)
 from static.RL_learn.learner import Learner, Game
 from flask import Flask, render_template, request, jsonify
 import datetime
