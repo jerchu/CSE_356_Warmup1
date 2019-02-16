@@ -3,8 +3,9 @@ import pickle
 import sys
 import ctypes
 
-kernel32 = ctypes.windll.kernel32
-kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+if __name__ == "__main__":
+    kernel32 = ctypes.windll.kernel32
+    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
 
 class Learner:
     def __init__(self, alpha=0.3, epsilon=0.2, gamma=0.9):
