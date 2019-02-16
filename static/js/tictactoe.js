@@ -1,4 +1,5 @@
 var board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+var winner = false;
 
 function make_move(num) {
     console.info("called");
@@ -21,10 +22,14 @@ function make_move(num) {
             for(i = 0; i < board.length; i++){
                 $("#"+(i+1)).text(board[i]);
                 if(board[i] == "X" || board[i] == "O"){
-                    $("#"+(i+1)).off("click");
+                    $("#"+(i+1)).off("onclick");
                 }
             }
             if(data.hasOwnProperty("winner")){
+                winner = true;
+                for(i = 0; i < board.length; i++){
+                    $("#"+(i+1)).off("onclick");
+                }
                 if(data.winner == " "){
                     $("#winner").text("Tie");
                 }
@@ -39,9 +44,10 @@ function make_move(num) {
 
 function reset_board(){
     board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+    winner= false;
     for(i = 0; i < board.length; i++){
         $("#"+(i+1)).text(board[i]);
-        $("#"+(i+1)).on("click");
+        $("#"+(i+1)).on("onclick");
     }
     $("#reset").hide()
     $("#winner").text("");

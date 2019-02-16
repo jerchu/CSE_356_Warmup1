@@ -38,6 +38,7 @@ body{
 .vertline{
     display:inline-block;
     background:black;
+    margin-bottom:-1vmin;
     width:1vmin;
     height:25vmin;
 }
