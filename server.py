@@ -3,11 +3,14 @@ here = os.path.dirname(__file__)
 import sys
 sys.path.insert(0, here)
 from static.RL_learn.learner import Learner, Game
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 import datetime
+import random
 app = Flask(__name__, static_url_path='')
 agent = Learner(epsilon=0)
 agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
+with open(os.path.join(here, 'static/images.txt'), 'r') as f:
+	image_links = f.readlines()
 import logging
 streamhndlr = logging.StreamHandler()
 app.logger.addHandler(streamhndlr)
@@ -15,7 +18,12 @@ app.logger.setLevel(logging.INFO)
 
 @app.route('/')
 def hello_world():
-    return 'Hello world'
+	random_img = random.choice(image_links)
+	resp = make_response(render_template('index.html', image=random_img))
+	resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+	resp.headers['Pragma'] = 'no-cache'
+	resp.headers['Expires'] = '0'
+	return resp
 
 @app.route('/ttt', strict_slashes=False, methods=['GET', 'POST'])
 def send_tic_tacs():
