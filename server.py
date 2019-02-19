@@ -6,11 +6,12 @@ from static.RL_learn.learner import Learner, Game
 from flask import Flask, render_template, request, jsonify, make_response
 import datetime
 import random
+import csv
 app = Flask(__name__, static_url_path='')
 agent = Learner(epsilon=0)
 agent.load_states(os.path.join(here, 'static/RL_learn/playero.pickle'))
-with open(os.path.join(here, 'static/images.txt'), 'r') as f:
-	image_links = f.readlines()
+with open(os.path.join(here, 'static/images.csv'), 'r') as f:
+	images = f.readlines()
 import logging
 streamhndlr = logging.StreamHandler()
 app.logger.addHandler(streamhndlr)
@@ -18,8 +19,12 @@ app.logger.setLevel(logging.INFO)
 
 @app.route('/')
 def hello_world():
-	random_img = random.choice(image_links)
-	resp = make_response(render_template('index.html', image=random_img))
+	random_img = random.choice(images).split(',')
+	data = {}
+	data['image'] = random_img[0]
+	if len(random_img) > 1:
+		data['title'] = random_img[1]
+	resp = make_response(render_template('index.html', **data))
 	resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
 	resp.headers['Pragma'] = 'no-cache'
 	resp.headers['Expires'] = '0'

@@ -5,7 +5,11 @@
     </head>
     <body>
         <div>
-            <p>Hello world</p>
+            {% if title %}
+                <p>{{title}}</p>
+            {% else %}
+                <p>Hello world</p>
+            {% endif %}
             <img src={{image}} alt="hmmm">
         </div>
     </body>
