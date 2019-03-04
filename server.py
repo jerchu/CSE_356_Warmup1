@@ -96,7 +96,7 @@ def add_user():
             http://{0}/verify?email={2}&key={1}
             
             """.format(hostname, user_data['verify_key'], user_data['email']),
-            sender='<noreply@{}>'.format(hostname),
+            sender='<root@localhost>',
             recipients=[user_data['email']])
         mail.send(msg)
         users.insert_one(user_data)
