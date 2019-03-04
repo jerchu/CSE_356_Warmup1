@@ -24,8 +24,8 @@
         update_cache: yes
       become: yes
       become_method: sudo
-    - name: install Flask
-      shell: pip3 install flask
+    - name: install Flask, Flask-Mail, PyMongo, and py-bcrypt
+      shell: pip3 install flask Flask-Mail pymongo py-bcrypt
       become: yes
       become_method: sudo
     - name: copy conf file
