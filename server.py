@@ -61,9 +61,9 @@ def hello_world():
 def send_tic_tacs():
     name = 'guest'
     users = db.users
-    if request.cookie.get('username') is not None:
-        username = request.cookie.get('username')
-        key = request.cookie.get('key')
+    if request.cookies.get('username') is not None:
+        username = request.cookies.get('username')
+        key = request.cookies.get('key')
         user = users.find_one({'username': name})
         if user is not None and 'key' in user and user['key'] == key:
             name = username
@@ -76,7 +76,7 @@ def play_game():
             board = request.json['grid']
         elif 'move' in request.json:
             users = db.users
-            user = users.find_one({'username': request.cookie.get('username')})
+            user = users.find_one({'username': request.cookies.get('username')})
             board = user['current_game']
             if board[move] != ' ':
                 return jsonify({'status': 'ERROR'})
@@ -205,7 +205,7 @@ def login():
 @app.route('/logout')
 def logout():
     users = db.users
-    username = request.cookie.get('username')
+    username = request.cookies.get('username')
     users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
     resp = make_response(jsonify({'status': 'OK'}))
     resp.set_cookie('uername', '', expires=0)
@@ -215,7 +215,7 @@ def logout():
 @app.route('/listgames')
 def list_games():
     users = db.users
-    username = request.cookie.get('username')
+    username = request.cookies.get('username')
     if username is not None:
         user = users.find_one({'username': username})
         games = user['games']
@@ -228,7 +228,7 @@ def list_games():
 @app.route('/getgame', methods=['POST'])
 def get_game():
     users = db.users
-    username = request.cookie.get('username')
+    username = request.cookies.get('username')
     if username is not None and request.is_json and 'id' in request.json:
         user = users.find_one({'username': username})
         game = next([game for game in user['games'] if game['id'] == request.json['id']], None)
@@ -239,7 +239,7 @@ def get_game():
 @app.route('/getscore')
 def get_score():
     users = db.users
-    username = request.cookie.get('username')
+    username = request.cookies.get('username')
     if username is not None:
         user = users.find_one({'username': username})
         player_wins = sum(game['winner'] == 'X' for game in user['games'])
