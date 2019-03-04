@@ -225,6 +225,7 @@ def list_games():
         for game in games:
             del game['grid']
             del game['winner']
+            game['id'] = str(game['id'])
         return jsonify({'status':'OK', 'games': games})
     return jsonify({'status': 'ERROR'})
 
@@ -234,7 +235,7 @@ def get_game():
     username = request.cookies.get('username')
     if username is not None and request.is_json and 'id' in request.json:
         user = users.find_one({'username': username})
-        game = next([game for game in user['games'] if game['id'] == request.json['id']], None)
+        game = next([game for game in user['games'] if str(game['id']) == request.json['id']], None)
         if game is not None:
             return jsonify({'status': 'OK', 'grid': game['grid'], 'winner': game['winner']})
     return jsonify({'status': 'ERROR'})
