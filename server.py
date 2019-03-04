@@ -217,7 +217,7 @@ def logout():
         return resp
     return jsonify({'status': 'ERROR'})
 
-@app.route('/listgames')
+@app.route('/listgames', methods=['GET', 'POST'])
 def list_games():
     users = db.users
     username = request.cookies.get('username')
@@ -244,7 +244,7 @@ def get_game():
                 return jsonify({'status': 'OK', 'grid': game['grid'], 'winner': game['winner']})
     return jsonify({'status': 'ERROR'})
 
-@app.route('/getscore')
+@app.route('/getscore', methods=['GET', 'POST'])
 def get_score():
     users = db.users
     username = request.cookies.get('username')
