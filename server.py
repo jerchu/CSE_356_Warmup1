@@ -191,8 +191,8 @@ def login():
     users = db.users
     if request.is_json:
         data = request.json
-        user = users.find_one({'username': data['username']})
-        if bcrypt.hashpw(data['password'], user['password']) == user['password']:
+        user = users.find_one({'username': data['username'], 'verified': True})
+        if user is not None and bcrypt.hashpw(data['password'], user['password']) == user['password']:
             if 'key' not in user:
                 user['key'] = uuid2slug(uuid.uuid4())
                 users.find_one_and_update({'username': data['username']}, {'$set': {'key': user['key']}})
@@ -207,7 +207,7 @@ def login():
 def logout():
     users = db.users
     username = request.cookies.get('username')
-    if username is not None:
+    if username is not None and users.find_one({'username': username, 'verified': True}) is not None:
         users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
         resp = make_response(jsonify({'status': 'OK'}))
         resp.set_cookie('username', '', expires=0)
@@ -220,13 +220,14 @@ def list_games():
     users = db.users
     username = request.cookies.get('username')
     if username is not None:
-        user = users.find_one({'username': username})
-        games = user['games']
-        for game in games:
-            del game['grid']
-            del game['winner']
-            game['id'] = str(game['id'])
-        return jsonify({'status':'OK', 'games': games})
+        user = users.find_one({'username': username, 'verified': True})
+        if user is not None:
+            games = user['games']
+            for game in games:
+                del game['grid']
+                del game['winner']
+                game['id'] = str(game['id'])
+            return jsonify({'status':'OK', 'games': games})
     return jsonify({'status': 'ERROR'})
 
 @app.route('/getgame', methods=['POST'])
@@ -234,10 +235,11 @@ def get_game():
     users = db.users
     username = request.cookies.get('username')
     if username is not None and request.is_json and 'id' in request.json:
-        user = users.find_one({'username': username})
-        game = next((game for game in user['games'] if str(game['id']) == request.json['id']), None)
-        if game is not None:
-            return jsonify({'status': 'OK', 'grid': game['grid'], 'winner': game['winner']})
+        user = users.find_one({'username': username, 'verified': True})
+        if user is not None:
+            game = next((game for game in user['games'] if str(game['id']) == request.json['id']), None)
+            if game is not None:
+                return jsonify({'status': 'OK', 'grid': game['grid'], 'winner': game['winner']})
     return jsonify({'status': 'ERROR'})
 
 @app.route('/getscore')
@@ -245,11 +247,12 @@ def get_score():
     users = db.users
     username = request.cookies.get('username')
     if username is not None:
-        user = users.find_one({'username': username})
-        player_wins = sum(game['winner'] == 'X' for game in user['games'])
-        agent_wins = sum(game['winner'] == 'O' for game in user['games'])
-        ties = player_wins = sum(game['winner'] == ' ' for game in user['games'])
-        return jsonify({'status': 'OK', 'human': player_wins, 'wopr': agent_wins, 'tie': ties})
+        user = users.find_one({'username': username, 'verified': True})
+        if user is not None:
+            player_wins = sum(game['winner'] == 'X' for game in user['games'])
+            agent_wins = sum(game['winner'] == 'O' for game in user['games'])
+            ties = player_wins = sum(game['winner'] == ' ' for game in user['games'])
+            return jsonify({'status': 'OK', 'human': player_wins, 'wopr': agent_wins, 'tie': ties})
     return jsonify({'status': 'ERROR'})
 
 def evaluate_state(board):
