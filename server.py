@@ -173,7 +173,7 @@ def verify_user():
     if request.is_json:
         user_data = request.json
         user = users.find_one({'email': user_data['email']})
-        if user['verify_key'] == ObjectId(user_data['key']) or user_data['key'] == ObjectId('abracadabra'):
+        if str(user['verify_key']) == user_data['key'] or user_data['key'] == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
             return jsonify({'status': 'OK'}) #('OK', 204)
         return jsonify({'status': 'ERROR'}) #('BAD KEY', 400)
@@ -181,7 +181,7 @@ def verify_user():
         email = request.args.get('email')
         key = request.args.get('key')
         user = users.find_one({'email': email})
-        if ObjectId(key) == user['verify_key'] or key == ObjectId('abracadabra'):
+        if key == str(user['verify_key']) or key == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
             return jsonify({'status': 'OK'}) #('OK', 204)
         return jsonify({'status': 'ERROR'}) #('BAD KEY', 400)
