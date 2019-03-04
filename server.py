@@ -205,13 +205,13 @@ def login():
         return jsonify({'status': 'ERROR'}) #('UNAUTHORIZED', 401)
     return jsonify({'status': 'ERROR'}) #('BAD REQUEST', 400)
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     users = db.users
     username = request.cookies.get('username')
     if username is not None and users.find_one({'username': username, 'verified': True}) is not None:
         users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
-        resp = make_response(jsonify({'status': 'OK'}))
+        resp = make_response(jsonify({'status': 'OK'}), 200)
         resp.set_cookie('username', '', expires=0)
         resp.set_cookie('key', '', expires=0)
         return resp
