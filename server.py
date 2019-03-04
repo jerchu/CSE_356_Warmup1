@@ -76,7 +76,9 @@ def play_game():
             board = request.json['grid']
         elif 'move' in request.json:
             users = db.users
-            user = users.find_one({'username': request.cookies.get('username')})
+            user = users.find_one({'username': request.cookies.get('username'), 'verified': True})
+            if user is None:
+                return jsonify({'status': 'ERROR'})
             board = user['current_game']
             move = request.json['move']
             if board[move] != ' ':
