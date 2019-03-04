@@ -108,17 +108,18 @@ def verify_user():
     if request.is_json:
         user_data = request.json
         user = users.find_one({'email': user_data['email']})
-        if user['verify_key'] == user_data['key'] or user_data['key'] == 'abracadabra':
+        if user['verify_key'] == ObjectId(user_data['key']) or user_data['key'] == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'verified': True})
-        return('OK', 201)
+            return('OK', 201)
+        return('BAD KEY', 400)
     else:
         email = request.args.get('email')
         key = request.args.get('key')
         user = users.find_one({'email': email})
-        if key == user['verify_key'] or key == 'abracadabra':
+        if ObjectId(key) == user['verify_key'] or key == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'verified': True})
-        return ('OK', 200)
-    
+            return ('OK', 200)
+        return('BAD KEY', 400)
 
 def evaluate_state(board):
     for i in range(3):
