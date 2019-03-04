@@ -78,6 +78,7 @@ def play_game():
             users = db.users
             user = users.find_one({'username': request.cookies.get('username')})
             board = user['current_game']
+            move = request.json['move']
             if board[move] != ' ':
                 return jsonify({'status': 'ERROR'})
             board[move] = 'X'
