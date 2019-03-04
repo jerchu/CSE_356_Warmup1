@@ -80,7 +80,7 @@ def play_game():
             if user is None:
                 return jsonify({'status': 'ERROR'})
             board = user['current_game']
-            move = request.json['move']
+            move = int(request.json['move'])
             if board[move] != ' ':
                 return jsonify({'status': 'ERROR'})
             board[move] = 'X'
