@@ -109,7 +109,7 @@ def verify_user():
         user_data = request.json
         user = users.find_one({'email': user_data['email']})
         if user['verify_key'] == ObjectId(user_data['key']) or user_data['key'] == 'abracadabra':
-            users.find_one_and_update({'email': user_data['email']}, {'verified': True})
+            users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
             return('OK', 201)
         return('BAD KEY', 400)
     else:
@@ -117,7 +117,7 @@ def verify_user():
         key = request.args.get('key')
         user = users.find_one({'email': email})
         if ObjectId(key) == user['verify_key'] or key == 'abracadabra':
-            users.find_one_and_update({'email': user_data['email']}, {'verified': True})
+            users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
             return ('OK', 200)
         return('BAD KEY', 400)
 
