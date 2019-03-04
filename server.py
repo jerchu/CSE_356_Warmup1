@@ -12,8 +12,19 @@ from pymongo import MongoClient
 import bcrypt
 import csv
 import smtplib
+import uuid
+import base64
 from email.message import EmailMessage
 from email.policy import SMTP
+
+# section below for converting uuid to base64 (a.k.a. a slug) and visa versa
+#--------------------------------------------
+def uuid2slug(id):
+    return base64.b64encode(id.bytes).decode('utf-8').rstrip('=\n').replace('/', '_').replace('+', '-')
+
+def slug2uuid(slug):
+    return uuid.UUID(bytes=(slug + '==').replace('_', '/').decode('base64'))
+#--------------------------------------------
 
 app = Flask(__name__, static_url_path='')
 mail = Mail(app)
@@ -46,17 +57,32 @@ def hello_world():
     resp.headers['Expires'] = '0'
     return resp
 
-@app.route('/ttt', strict_slashes=False, methods=['GET', 'POST'])
+@app.route('/ttt', strict_slashes=False)
 def send_tic_tacs():
-    if request.method == 'POST':
-        name = request.form['name']
-        return render_template('tictactoe.html', name=name, date=datetime.datetime.today().strftime('%Y-%m-%d'))
-    return render_template('tictactoe.html')
+    name = 'guest'
+    users = db.users
+    if request.cookie.get('username') is not None:
+        username = request.cookie.get('username')
+        key = request.cookie.get('key')
+        user = users.find_one({'username': name})
+        if user is not None and 'key' in user and user['key'] == key:
+            name = username
+    return render_template('tictactoe.html', name=name, date=datetime.datetime.today().strftime('%Y-%m-%d'))
 
 @app.route('/ttt/play', methods=['POST'])
 def play_game():
-    if request.is_json and 'grid' in request.json:
-        board = request.json['grid']
+    if request.is_json:
+        if 'grid' in request.json:
+            board = request.json['grid']
+        elif 'move' in request.json:
+            users = db.users
+            user = users.find_one({'username': request.cookie.get('username')})
+            board = user['current_game']
+            if board[move] != ' ':
+                return jsonify({'status': 'ERROR'})
+            board[move] = 'X'
+            if 'start_date' not in user:
+                users.find_one_and_update({'username': user['username']}, {'$set':{'start_date': datetime.datetime.now()}})
         payload = {}
         reward, done = evaluate_state(board)
         if done:
@@ -64,15 +90,53 @@ def play_game():
             payload['winner'] = 'X'
             if reward == 0.5:
                 payload['winner'] = ' '
+            if 'move' in request.json:
+                users.find_one_and_update({'username': user['username']}, 
+                    {
+                        '$set': {
+                            'current_game': [' ']*9
+                        },
+                        '$unset': {
+                            'start_date': ''
+                        },
+                        '$push': {
+                            'games': {
+                                'id': user['game_id'],
+                                'start_date': user['start_date'],
+                                'grid': board,
+                                'winner': payload['winner']
+                            }
+                        }
+                    })
             return jsonify(payload)
         move = agent.make_move(board)
         board[move] = 'O'
+        if 'move' in request.json:
+            users.find_one_and_update({'username': user['username']}, {'$set':{'current_game': board}})
         payload['grid'] = board
         reward, done = evaluate_state(board)
         if done:
             payload['winner'] = 'O'
             if reward == 0.5:
                 payload['winner'] = ' '
+            if 'move' in request.json:
+                users.find_one_and_update({'username': user['username']}, 
+                    {
+                        '$set': {
+                            'current_game': [' ']*9
+                        },
+                        '$unset': {
+                            'start_date': ''
+                        },
+                        '$push': {
+                            'games': {
+                                'id': user['game_id'],
+                                'start_date': user['start_date'],
+                                'grid': board,
+                                'winner': payload['winner']
+                            }
+                        }
+                    })
         return jsonify(payload)
     return ('BAD REQUEST', 400)
 
@@ -88,7 +152,7 @@ def add_user():
         user_data['verified'] = False
         user_data['password'] = bcrypt.hashpw(user_data['password'], bcrypt.gensalt())
         msg = Message('Verify your Tic Tac Toe Account at {}'.format(hostname),
-            body="""\ 
+            body=""" 
             
             Thank you for creating a Tic Tac Toe account.
             
@@ -100,7 +164,7 @@ def add_user():
             recipients=[user_data['email']])
         mail.send(msg)
         users.insert_one(user_data)
-        return ('OK', 201)
+        return jsonify({'status': 'OK'}) #('OK', 201)
 
 @app.route('/verify', methods=['POST', 'GET'])
 def verify_user():
@@ -110,16 +174,79 @@ def verify_user():
         user = users.find_one({'email': user_data['email']})
         if user['verify_key'] == ObjectId(user_data['key']) or user_data['key'] == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
-            return('OK', 201)
-        return('BAD KEY', 400)
+            return jsonify({'status': 'OK'}) #('OK', 204)
+        return jsonify({'status': 'ERROR'}) #('BAD KEY', 400)
     else:
         email = request.args.get('email')
         key = request.args.get('key')
         user = users.find_one({'email': email})
         if ObjectId(key) == user['verify_key'] or key == 'abracadabra':
             users.find_one_and_update({'email': user_data['email']}, {'$set':{'verified': True}})
-            return ('OK', 200)
-        return('BAD KEY', 400)
+            return jsonify({'status': 'OK'}) #('OK', 204)
+        return jsonify({'status': 'ERROR'}) #('BAD KEY', 400)
+
+@app.route('/login', methods='POST')
+def login():
+    users = db.users
+    if request.is_json:
+        data = request.json
+        user = users.find_one({'username': data['username']})
+        if bcrypt.hashpw(data['password'], user['password']) == user['password']:
+            if 'key' not in user:
+                user['key'] = uuid2slug(uuid.uuid4())
+                users.find_one_and_update(data['username'], {'$set': {'key', user['key']}})
+            resp = make_response(jsonify({'status': 'OK'})) #('OK', 200)
+            resp.set_cookie('username', data['username'])
+            resp.set_cookie('key', user['key'])
+            return resp
+        return jsonify({'status': 'ERROR'}) #('UNAUTHORIZED', 401)
+    return jsonify({'status': 'ERROR'}) #('BAD REQUEST', 400)
+
+@app.route('/logout')
+def logout():
+    users = db.users
+    username = request.cookie.get('username')
+    users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
+    resp = make_response(jsonify({'status': 'OK'}))
+    resp.set_cookie('uername', '', expires=0)
+    resp.set_cookie('key', None, expires=0)
+    return resp
+
+@app.route('/listgames')
+def list_games():
+    users = db.users
+    username = request.cookie.get('username')
+    if username is not None:
+        user = users.find_one({'username': username})
+        games = user['games']
+        for game in games:
+            del game['grid']
+            del game['winner']
+        return jsonify({'status':'OK', 'games': games})
+    return jsonify({'status': 'ERROR'})
+
+@app.route('/getgame', methods=['POST'])
+def get_game():
+    users = db.users
+    username = request.cookie.get('username')
+    if username is not None and request.is_json and 'id' in request.json:
+        user = users.find_one({'username': username})
+        game = next([game for game in user['games'] if game['id'] == request.json['id']], None)
+        if game is not None:
+            return jsonify({'status': 'OK', 'grid': game['grid'], 'winner': game['winner']})
+    return jsonify({'status': 'ERROR'})
+
+@app.route('/getscore')
+def get_score():
+    users = db.users
+    username = request.cookie.get('username')
+    if username is not None:
+        user = users.find_one({'username': username})
+        player_wins = sum(game['winner'] == 'X' for game in user['games'])
+        agent_wins = sum(game['winner'] == 'O' for game in user['games'])
+        ties = player_wins = sum(game['winner'] == ' ' for game in user['games'])
+        return jsonify({'status': 'OK', 'human': player_wins, 'wopr': agent_wins, 'tie': ties})
+    return jsonify({'status': 'ERROR'})
 
 def evaluate_state(board):
     for i in range(3):
