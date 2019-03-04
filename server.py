@@ -194,7 +194,7 @@ def login():
         if bcrypt.hashpw(data['password'], user['password']) == user['password']:
             if 'key' not in user:
                 user['key'] = uuid2slug(uuid.uuid4())
-                users.find_one_and_update({'username': data['username']}, {'$set': {'key', user['key']}})
+                users.find_one_and_update({'username': data['username']}, {'$set': {'key': user['key']}})
             resp = make_response(jsonify({'status': 'OK'})) #('OK', 200)
             resp.set_cookie('username', data['username'])
             resp.set_cookie('key', user['key'])
