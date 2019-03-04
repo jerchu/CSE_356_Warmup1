@@ -206,11 +206,13 @@ def login():
 def logout():
     users = db.users
     username = request.cookies.get('username')
-    users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
-    resp = make_response(jsonify({'status': 'OK'}))
-    resp.set_cookie('uername', '', expires=0)
-    resp.set_cookie('key', None, expires=0)
-    return resp
+    if username is not None:
+        users.find_one_and_update({'username': username}, {'$unset': {'key': None}})
+        resp = make_response(jsonify({'status': 'OK'}))
+        resp.set_cookie('username', '', expires=0)
+        resp.set_cookie('key', '', expires=0)
+        return resp
+    return jsonify({'status': 'ERROR'})
 
 @app.route('/listgames')
 def list_games():
