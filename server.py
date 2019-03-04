@@ -185,7 +185,7 @@ def verify_user():
             return jsonify({'status': 'OK'}) #('OK', 204)
         return jsonify({'status': 'ERROR'}) #('BAD KEY', 400)
 
-@app.route('/login', methods='POST')
+@app.route('/login', methods=['POST'])
 def login():
     users = db.users
     if request.is_json:
