@@ -271,10 +271,11 @@ def get_message():
         result = channel.queue_declare(exclusive=True)
         for key in request.json['keys']:
             channel.queue_bind(exchange='hw3', queue=result.method.queue, routing_key=key)
-        msg = (None, None, None)
-        while(msg is None or msg[0] is None):
-            msg = channel.basic_get(result.method.queue)
-        return jsonify({"msg": str(msg[2])})
+        for method_frame, properties, body in channel.consume(result.method.queue):
+            msg = body
+            break
+        channel.cancel()
+        return jsonify({"msg": str(msg)})
     return ('BAD REQUEST', 400)
 
 @app.route('/speak', methods=['POST'])
