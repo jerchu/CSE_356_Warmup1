@@ -268,6 +268,8 @@ def get_score():
 @app.route('/listen', methods=['POST'])
 def get_message():
     if request.is_json:
+        channel = connection.channel()
+        channel.exchange_declare(exchange='hw3', exchange_type='fanout')
         result = channel.queue_declare(exclusive=True)
         for key in request.json['keys']:
             channel.queue_bind(exchange='hw3', queue=result.method.queue, routing_key=key)
