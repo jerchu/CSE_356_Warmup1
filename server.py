@@ -280,7 +280,7 @@ def get_message():
 @app.route('/speak', methods=['POST'])
 def add_message():
     if request.is_json:
-        channel.publish('hw3', request.json['key'], request.json['body'])
+        channel.publish('hw3', request.json['key'], request.json['msg'])
         return ('OK', 201)
     return ('BAD REQUEST', 400)
 
