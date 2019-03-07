@@ -273,7 +273,7 @@ def get_message():
             channel.queue_bind(exchange='hw3', queue=result.method.queue, routing_key=key)
         msg = (None, None, None)
         while(msg is None or msg[0] is None):
-            msg = channel.basic_get(result)
+            msg = channel.basic_get(result.method.queue)
         return jsonify({"msg": msg[2]})
     return ('BAD REQUEST', 400)
 
