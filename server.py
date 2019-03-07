@@ -16,6 +16,7 @@ import uuid
 import base64
 from email.message import EmailMessage
 from email.policy import SMTP
+import pika
 
 # section below for converting uuid to base64 (a.k.a. a slug) and visa versa
 #--------------------------------------------
@@ -43,6 +44,11 @@ client = MongoClient('localhost', 27017)
 db = client.ttt
 
 hostname='130.245.170.248'
+
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+channel = connection.channel()
+
+channel.exchange_declare(exchange='hw3', exchange_type='fanout')
 
 @app.route('/')
 def hello_world():
@@ -258,6 +264,25 @@ def get_score():
             ties = player_wins = sum(game['winner'] == ' ' for game in user['games'])
             return jsonify({'status': 'OK', 'human': player_wins, 'wopr': agent_wins, 'tie': ties})
     return jsonify({'status': 'ERROR'})
+
+@app.route('/listen', methods=['POST'])
+def get_message():
+    if request.is_json:
+        result = channel.queue_declare(exclusive=True)
+        for key in request.json['keys']:
+            channel.queue_bind(exchange='hw3', queue=result.method.queue, routing_key=key)
+        msg = (None, None, None)
+        while(msg[2] is None):
+            msg = channel.basic_get(result)
+        return jsonify({"msg": msg[2]})
+    return ('BAD REQUEST', 400)
+
+@app.route('/speak', methods=['POST'])
+def add_message():
+    if request.is_json:
+        channel.publish('hw3', request.json['key'], request.json['body'])
+        return ('OK', 201)
+    return ('BAD REQUEST', 400)
 
 def evaluate_state(board):
     for i in range(3):
