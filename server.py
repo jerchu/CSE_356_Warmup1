@@ -281,7 +281,7 @@ def get_message():
 def add_message():
     if request.is_json:
         channel.publish('hw3', request.json['key'], request.json['msg'])
-        return ('OK', 201)
+        return ('OK', 200)
     return ('BAD REQUEST', 400)
 
 def evaluate_state(board):
