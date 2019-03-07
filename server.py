@@ -274,7 +274,7 @@ def get_message():
         msg = (None, None, None)
         while(msg is None or msg[0] is None):
             msg = channel.basic_get(result.method.queue)
-        return jsonify({"msg": msg[2]})
+        return jsonify({"msg": str(msg[2])})
     return ('BAD REQUEST', 400)
 
 @app.route('/speak', methods=['POST'])
